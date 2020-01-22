@@ -1,0 +1,7 @@
+Domand:
+Possono esistere tabelle isolate nel EER diagram ?
+Non ho la necessità di sapere su quale veicolo essi siano stati timbrati
+
+Problema con l'entià capolinea, rischio riscritture multiple
+Forse dovrei fare due tabelle con capolinea di partenza e capolinbea finale
+Ho assunto che non mi servisse sapere da dove iniza e dove finisce
