@@ -3,7 +3,6 @@
 #include <string.h>
 #include <mysql.h>
 
-
 #include "defines.h"
 
 typedef enum {
@@ -135,6 +134,7 @@ main(void) {
 				
 			}
 		case 2:
+			printf("-------------------------------------------\n");
 			printf("Bye!\n");
 			system("pause");
 			mysql_close(conn);

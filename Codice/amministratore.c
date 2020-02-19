@@ -9,6 +9,10 @@ struct average_grades {
 	char CF[16];
 	double avg;
 };
+struct average_gradess {
+	int Matricola;
+	double avg;
+};
 
 static void Assegna_turno_al_conducente(MYSQL* conn) {
 	MYSQL_STMT* distanza_stmt;
@@ -28,13 +32,13 @@ static void Cambia_conducente_turno(MYSQL* conn) {
 }
 static size_t parse_avgs(MYSQL* conn, MYSQL_STMT* stmt, struct average_grades** ret)
 {
+	
 	int status;
 	size_t row = 0;
 	MYSQL_BIND param[2];
 	my_bool is_null;
 	double avg;
 	char CF[16];
-
 
 	if (mysql_stmt_store_result(stmt)) {
 		fprintf(stderr, " mysql_stmt_execute(), 1 failed\n");
@@ -45,6 +49,7 @@ static size_t parse_avgs(MYSQL* conn, MYSQL_STMT* stmt, struct average_grades** 
 	*ret = malloc(mysql_stmt_num_rows(stmt) * sizeof(struct average_grades));
 
 	memset(param, 0, sizeof(param));
+
 	param[0].buffer_type = MYSQL_TYPE_VAR_STRING;
 	param[0].buffer = CF;
 	param[0].buffer_length = 16;
@@ -57,7 +62,8 @@ static size_t parse_avgs(MYSQL* conn, MYSQL_STMT* stmt, struct average_grades** 
 	if (mysql_stmt_bind_result(stmt, param)) {
 		finish_with_stmt_error(conn, stmt, "Unable to bind column parameters\n", true);
 	}
-
+	int i = 1;
+	printf("Conducenti: \n");
 	/* assemble course general information */
 	while (true) {
 		status = mysql_stmt_fetch(stmt);
@@ -66,8 +72,57 @@ static size_t parse_avgs(MYSQL* conn, MYSQL_STMT* stmt, struct average_grades** 
 			break;
 
 		strcpy_s((*ret)[row].CF,16, CF);
-		sprintf_s("%s",16, CF);
-		(*ret)[row].avg = avg;
+		printf_s("%d) Conducente : %s\n",i,CF);
+		i++;
+		row++;
+	}
+
+	return row;
+}
+static size_t parse_avgss(MYSQL* conn, MYSQL_STMT* stmt, struct average_gradess** ret)
+{
+
+	int status;
+	size_t row = 0;
+	MYSQL_BIND param[2];
+	my_bool is_null;
+	double avg;
+	int Matricola;
+
+	if (mysql_stmt_store_result(stmt)) {
+		fprintf(stderr, " mysql_stmt_execute(), 1 failed\n");
+		fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+		exit(0);
+	}
+
+	*ret = malloc(mysql_stmt_num_rows(stmt) * sizeof(struct average_gradess));
+
+	memset(param, 0, sizeof(param));
+
+	param[0].buffer_type = MYSQL_TYPE_VAR_STRING;
+	param[0].buffer = &Matricola;
+	param[0].buffer_length = 16;
+
+	/*Devo restiturilo nella store procedure*/
+	param[1].buffer_type = MYSQL_TYPE_DOUBLE;
+	param[1].buffer = &avg;
+	param[1].buffer_length = sizeof(avg);
+
+	if (mysql_stmt_bind_result(stmt, param)) {
+		finish_with_stmt_error(conn, stmt, "Unable to bind column parameters\n", true);
+	}
+	int i = 1;
+	printf("Veicoli: \n");
+	/* assemble course general information */
+	while (true) {
+		status = mysql_stmt_fetch(stmt);
+
+		if (status == 1 || status == MYSQL_NO_DATA)
+			break;
+
+		(*ret)[row].Matricola = Matricola;
+		printf_s("%d) Veicolo : %d\n", i, Matricola);
+		i++;
 		row++;
 	}
 
@@ -81,10 +136,14 @@ static void Visualizza_conducenti_attivi(MYSQL* conn) {
 	struct average_grades *avgs=NULL; /*DEVO TOGLIERE IL NULL MA MI DA ERRORE*/
 	size_t conducenti = 0;
 	char header[512];
+
 	// Prepare stored procedure call
 	if (!setup_prepared_stmt(&Visualizza_conducenti, "call Visualizza_conducenti_attivi()", conn)) {
 		finish_with_stmt_error(conn, Visualizza_conducenti, "Unable to initialize career report statement\n", false);
 	}
+
+	
+
 	// Run procedure
 	if (mysql_stmt_execute(Visualizza_conducenti) != 0) {
 		print_stmt_error(Visualizza_conducenti, "An error occurred while retrieving the career report.");
@@ -104,6 +163,7 @@ static void Visualizza_conducenti_attivi(MYSQL* conn) {
 		}
 		else {
 			sprintf_s(header,512, "\nConducente: %s", avgs[conducenti].CF);
+			dump_result_set(conn, Visualizza_conducenti, header);
 			conducenti++;
 		}
 
@@ -120,17 +180,203 @@ out:
 
 }
 static void Visualizza_conducenti_fermi(MYSQL* conn) {
-	MYSQL_STMT* distanza_stmt;
+
+	MYSQL_STMT* Visualizza_conducenti_f;
+	int status;
+	bool first = true;
+	struct average_grades* avgs = NULL; /*DEVO TOGLIERE IL NULL MA MI DA ERRORE*/
+	size_t conducenti = 0;
+	char header[512];
+
+	// Prepare stored procedure call
+	if (!setup_prepared_stmt(&Visualizza_conducenti_f, "call Visualizza_conducenti_fermi()", conn)) {
+		finish_with_stmt_error(conn, Visualizza_conducenti_f, "Unable to initialize career report statement\n", false);
+	}
+
+
+
+	// Run procedure
+	if (mysql_stmt_execute(Visualizza_conducenti_f) != 0) {
+		print_stmt_error(Visualizza_conducenti_f, "An error occurred while retrieving the career report.");
+		goto out;
+	}
+
+	// We have multiple result sets here!
+	do {
+		// Skip OUT variables (although they are not present in the procedure...)
+		if (conn->server_status & SERVER_PS_OUT_PARAMS) {
+			goto next;
+		}
+
+		if (first) {
+			parse_avgs(conn, Visualizza_conducenti_f, &avgs);
+			first = false;
+		}
+		else {
+			sprintf_s(header, 512, "\nConducente: %s", avgs[conducenti].CF);
+			dump_result_set(conn, Visualizza_conducenti_f, header);
+			conducenti++;
+		}
+
+		// more results? -1 = no, >0 = error, 0 = yes (keep looking)
+	next:
+		status = mysql_stmt_next_result(Visualizza_conducenti_f);
+		if (status > 0)
+			finish_with_stmt_error(conn, Visualizza_conducenti_f, "Unexpected condition", true);
+
+	} while (status == 0);
+
+out:
+	mysql_stmt_close(Visualizza_conducenti_f);
+
 }
 static void Visualizza_veicoli_attivi(MYSQL* conn) {
-	MYSQL_STMT* distanza_stmt;
+	MYSQL_STMT* Visualizza_veicoli;
+	int status;
+	bool first = true;
+	struct average_gradess* avgs = NULL; 
+	size_t veicoli = 0;
+	char header[512];
+
+	// Prepare stored procedure call
+	if (!setup_prepared_stmt(&Visualizza_veicoli, "call Visualizza_veicoli_attivi()", conn)) {
+		finish_with_stmt_error(conn, Visualizza_veicoli, "Unable to initialize career report statement\n", false);
+	}
+
+
+
+	// Run procedure
+	if (mysql_stmt_execute(Visualizza_veicoli) != 0) {
+		print_stmt_error(Visualizza_veicoli, "An error occurred while retrieving the career report.");
+		goto out;
+	}
+
+	// We have multiple result sets here!
+	do {
+		// Skip OUT variables (although they are not present in the procedure...)
+		if (conn->server_status & SERVER_PS_OUT_PARAMS) {
+			goto next;
+		}
+
+		if (first) {
+			parse_avgss(conn, Visualizza_veicoli, &avgs);
+			first = false;
+		}
+		else {
+			sprintf_s(header, 512, "\nVeicolo: %i", avgs[veicoli].Matricola);
+			dump_result_set(conn, Visualizza_veicoli, header);
+			veicoli++;
+		}
+
+		// more results? -1 = no, >0 = error, 0 = yes (keep looking)
+	next:
+		status = mysql_stmt_next_result(Visualizza_veicoli);
+		if (status > 0)
+			finish_with_stmt_error(conn, Visualizza_veicoli, "Unexpected condition", true);
+
+	} while (status == 0);
+
+out:
+	mysql_stmt_close(Visualizza_veicoli);
+
 }
 static void Visualizza_veicoli_fermi(MYSQL* conn) {
-	MYSQL_STMT* distanza_stmt;
+	MYSQL_STMT* Visualizza_veicoli_f;
+	int status;
+	bool first = true;
+	struct average_gradess* avgs = NULL;
+	size_t veicoli = 0;
+	char header[512];
+
+	// Prepare stored procedure call
+	if (!setup_prepared_stmt(&Visualizza_veicoli_f, "call Visualizza_veicoli_fermi()", conn)) {
+		finish_with_stmt_error(conn, Visualizza_veicoli_f, "Unable to initialize career report statement\n", false);
+	}
+
+
+
+	// Run procedure
+	if (mysql_stmt_execute(Visualizza_veicoli_f) != 0) {
+		print_stmt_error(Visualizza_veicoli_f, "An error occurred while retrieving the career report.");
+		goto out;
+	}
+
+	// We have multiple result sets here!
+	do {
+		// Skip OUT variables (although they are not present in the procedure...)
+		if (conn->server_status & SERVER_PS_OUT_PARAMS) {
+			goto next;
+		}
+
+		if (first) {
+			parse_avgss(conn, Visualizza_veicoli_f, &avgs);
+			first = false;
+		}
+		else {
+			sprintf_s(header, 512, "\nVeicolo: %i", avgs[veicoli].Matricola);
+			dump_result_set(conn, Visualizza_veicoli_f, header);
+			veicoli++;
+		}
+
+		// more results? -1 = no, >0 = error, 0 = yes (keep looking)
+	next:
+		status = mysql_stmt_next_result(Visualizza_veicoli_f);
+		if (status > 0)
+			finish_with_stmt_error(conn, Visualizza_veicoli_f, "Unexpected condition", true);
+
+	} while (status == 0);
+
+out:
+	mysql_stmt_close(Visualizza_veicoli_f);
 }
 static void Elimina_conducente(MYSQL* conn) {
-	MYSQL_STMT* distanza_stmt;
+	MYSQL_STMT* Elimina;
 	MYSQL_BIND param[2];
+	char codice[16];
+	char patente[10];
+	printf("Inserisci il codice fiscale : ");
+	scanf_s("%s", codice);
+	printf("Inserisci il numero della patente : ");
+	scanf_s("%s", patente);
+	if (!setup_prepared_stmt(&Elimina, "call Elimina_conducente(?, ?)", conn)) {
+		print_stmt_error(Elimina, "Unable to initialize login statement\n");
+	}
+
+	// Prepare parameters
+	memset(param, 0, sizeof(param));
+
+	param[0].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[0].buffer = codice;
+	param[0].buffer_length = 16;
+
+	param[1].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[1].buffer = patente;
+	param[1].buffer_length = 10;
+
+	if (mysql_stmt_bind_param(Elimina, param) != 0) {
+		finish_with_stmt_error(conn, Elimina, "Could not bind parameters for career report\n", true);
+	}
+	// Run procedure
+	if (mysql_stmt_execute(Elimina) != 0) {
+		print_stmt_error(Elimina, "An error occurred while retrieving the career report.");
+		goto out;
+	}
+
+
+	// Retrieve output parameter
+	if (mysql_stmt_fetch(Elimina)) {
+		print_stmt_error(Elimina, "Could not buffer results");
+
+	}
+	printf("Hai eliminato | CF: %s   Patente: %s\n", codice, patente);
+	system("pause");
+	mysql_stmt_close(Elimina);
+	return;
+
+
+out:
+	mysql_stmt_close(Elimina);
+
 }
 static void Emetti_biglietto(MYSQL* conn) {
 	MYSQL_STMT* distanza_stmt;
