@@ -81,7 +81,7 @@ err:
 
 
 main(void) {
-	printf("/**************	Benevenuto nel nuovo sistema di trasporto pubblico di Ivan Palmieri	**************/\n");
+	printf("	**************	Benevenuto nel nuovo sistema di trasporto pubblico di Ivan Palmieri	**************\n\n\n");
 	role_t role;
 	conn = mysql_init(NULL);
 	if (conn == NULL) {
@@ -99,22 +99,23 @@ main(void) {
 	int choise;
 	while (true)
 	{
-		printf("*** Cosa vuoi fare? *** \n\n");
+		printf("*** Cosa vuoi fare? *** \n");
 		printf("1) Login\n");
 		printf("2) Quit\n");
 		scanf_s("%i", &choise);
 		switch (choise) 
 		{
 		case 1:
-			printf("-----------------------Login----------------------\n");
+			printf("---------------------------------------------------------Login-----------------------------------------------------\n");
 			printf("Username: ");
 			scanf_s("%s", &us);
 			printf("Password: ");
 			scanf_s("%s", &pass);
-			printf("----------------------------------------------------------------\n");
+			printf("--------------------------------------------------------------------------------------------------------------------\n");
 			printf("Hai inserito [%s %s]\n", us, pass);
 			role = attempt_login(conn, us, pass);
-			switch (role) {
+			switch (role) 
+			{
 			case PASSEGGERO:
 				printf("Connessione riuscita come passeggero\n");
 				run_as_passeggero(conn);
@@ -133,12 +134,13 @@ main(void) {
 				printf("Credenziali sbagliate\n");
 				
 			}
+			break;
 		case 2:
-			printf("-------------------------------------------\n");
+			printf("----------------------------------------------------------------------------------------------------------------------\n");
 			printf("Bye!\n");
 			system("pause");
 			mysql_close(conn);
-			return 0;
+			return;
 		}
 		
 

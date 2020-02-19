@@ -23,13 +23,110 @@ static void Assegna_veicolo_alla_tratta(MYSQL* conn) {
 	MYSQL_BIND param[4];
 }
 static void Assumi_conducente(MYSQL* conn) {
-	MYSQL_STMT* distanza_stmt;
-	MYSQL_BIND param[7];
-}
+	MYSQL_STMT* Assum_cond;
+	MYSQL_BIND param[8];
+	MYSQL_TIME  ts;
+	MYSQL_TIME  tl;
+	char CF[16];
+	char nome[45];
+	char username[45];
+	char cognome[45];
+	char patente[10];
+	char nascita[16];
+	char scadenza[16];
+	char luogo_nascita[45];
+
+	printf("Inserisci l'username dell'utente da assumere come conducente : ");
+	scanf_s("%s", username,45);
+	printf("Inserisci il codice fiscale : ");
+	scanf_s("%s", CF,16);
+	printf("Inserisci il nome : ");
+	scanf_s("%s", nome,45);
+	printf("Inserisci il cognome : ");
+	scanf_s("%s", cognome,45);
+	printf("Inserisci la data di nascita\n");
+	printf("Anno : ");
+	scanf_s("%d", &ts.year,4);
+	printf("Mese : ");
+	scanf_s("%d", &ts.month,2);
+	printf("Giorno : ");
+	scanf_s("%d", &ts.day,2);
+	printf("Inserisci il luogo di nascita : ");
+	scanf_s("%s", luogo_nascita,45);
+	printf("Inserisci la data di scadenza della patente \n");
+	printf("Anno : ");
+	scanf_s("%d", &tl.year,4);
+	printf("Mese : ");
+	scanf_s("%d", &tl.month,2);
+	printf("Giorno : ");
+	scanf_s("%d", &tl.day,2);
+	printf("Inserisci il numero di patente: ");
+	scanf_s("%s", patente,10);
+
+
+	if (!setup_prepared_stmt(&Assum_cond, "call Assumi_conducente(?, ?, ?, ?, ?, ?, ?, ?)", conn)) {
+		print_stmt_error(Assum_cond, "Unable to initialize login statement\n");
+	}
+
+	// Prepare parameters
+	memset(param, 0, sizeof(param));
+
+	param[0].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[0].buffer = CF;
+	param[0].buffer_length = strlen(CF);
+
+	param[1].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[1].buffer = nome;
+	param[1].buffer_length = strlen(nome);
+
+	param[2].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[2].buffer = cognome;
+	param[2].buffer_length = strlen(cognome);
+
+	param[3].buffer_type = MYSQL_TYPE_DATE;  //IN  DATAAA
+	param[3].buffer = (char*)&ts;
+	param[3].buffer_length = sizeof(ts);
+
+	param[4].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[4].buffer = luogo_nascita;
+	param[4].buffer_length = strlen(luogo_nascita);
+
+	param[5].buffer_type = MYSQL_TYPE_DATE;  //IN  DATAAA
+	param[5].buffer = (char*)&tl;
+	param[5].buffer_length = sizeof(tl);
+
+	param[6].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[6].buffer = patente;
+	param[6].buffer_length = strlen(patente);
+
+	param[7].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[7].buffer = username;
+	param[7].buffer_length = strlen(username);
+
+	if (mysql_stmt_bind_param(Assum_cond, param) != 0) {
+		finish_with_stmt_error(conn, Assum_cond, "Could not bind parameters for career report\n", true);
+	}
+	// Run procedure
+	if (mysql_stmt_execute(Assum_cond) != 0) {
+		print_stmt_error(Assum_cond, "An error occurred while retrieving the career report.");
+		goto out;
+	}
+
+	printf("Hai aggiunto : CF %s, Nome: %s, Cognome: %s con l'username :%s", CF, nome,cognome,username);
+	system("pause");
+	mysql_stmt_close(Assum_cond);
+	return;
+
+
+out:
+	mysql_stmt_close(Assum_cond);
+
+}  
 static void Cambia_conducente_turno(MYSQL* conn) {
 	MYSQL_STMT* distanza_stmt;
 	MYSQL_BIND param[4];
 }
+
 static size_t parse_avgs(MYSQL* conn, MYSQL_STMT* stmt, struct average_grades** ret)
 {
 	
@@ -230,6 +327,7 @@ out:
 	mysql_stmt_close(Visualizza_conducenti_f);
 
 }
+
 static void Visualizza_veicoli_attivi(MYSQL* conn) {
 	MYSQL_STMT* Visualizza_veicoli;
 	int status;
@@ -279,7 +377,7 @@ static void Visualizza_veicoli_attivi(MYSQL* conn) {
 out:
 	mysql_stmt_close(Visualizza_veicoli);
 
-}
+} /*SBAGLIA IL CODICE DEI VEICOLI*/
 static void Visualizza_veicoli_fermi(MYSQL* conn) {
 	MYSQL_STMT* Visualizza_veicoli_f;
 	int status;
@@ -328,16 +426,18 @@ static void Visualizza_veicoli_fermi(MYSQL* conn) {
 
 out:
 	mysql_stmt_close(Visualizza_veicoli_f);
-}
+} /*SBAGLIA IL CODICE DEI VEICOLI*/
+
 static void Elimina_conducente(MYSQL* conn) {
 	MYSQL_STMT* Elimina;
 	MYSQL_BIND param[2];
 	char codice[16];
 	char patente[10];
 	printf("Inserisci il codice fiscale : ");
-	scanf_s("%s", codice);
+	scanf_s("%s", codice,16);
 	printf("Inserisci il numero della patente : ");
-	scanf_s("%s", patente);
+	scanf_s("%s",patente,10);
+
 	if (!setup_prepared_stmt(&Elimina, "call Elimina_conducente(?, ?)", conn)) {
 		print_stmt_error(Elimina, "Unable to initialize login statement\n");
 	}
@@ -347,11 +447,11 @@ static void Elimina_conducente(MYSQL* conn) {
 
 	param[0].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
 	param[0].buffer = codice;
-	param[0].buffer_length = 16;
+	param[0].buffer_length = strlen(codice);
 
 	param[1].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
 	param[1].buffer = patente;
-	param[1].buffer_length = 10;
+	param[1].buffer_length = strlen(patente);
 
 	if (mysql_stmt_bind_param(Elimina, param) != 0) {
 		finish_with_stmt_error(conn, Elimina, "Could not bind parameters for career report\n", true);
@@ -360,13 +460,6 @@ static void Elimina_conducente(MYSQL* conn) {
 	if (mysql_stmt_execute(Elimina) != 0) {
 		print_stmt_error(Elimina, "An error occurred while retrieving the career report.");
 		goto out;
-	}
-
-
-	// Retrieve output parameter
-	if (mysql_stmt_fetch(Elimina)) {
-		print_stmt_error(Elimina, "Could not buffer results");
-
 	}
 	printf("Hai eliminato | CF: %s   Patente: %s\n", codice, patente);
 	system("pause");
@@ -377,12 +470,115 @@ static void Elimina_conducente(MYSQL* conn) {
 out:
 	mysql_stmt_close(Elimina);
 
-}
+} /*MI CONFERMA IL TUTTO MA NON LO ELIMINA SUL DATABASE*/
+
 static void Emetti_biglietto(MYSQL* conn) {
-	MYSQL_STMT* distanza_stmt;
+	MYSQL_STMT* EmettiB=NULL;
+	int biglietti;
+	printf("Inserisci il numero di biglietti da emettere : ");
+	scanf_s("%d", &biglietti);
+
+	for (int j = 0; j < biglietti; j++)
+	{
+		if (!setup_prepared_stmt(&EmettiB, "call Emetti_biglietto()", conn)) {
+			print_stmt_error(EmettiB, "Unable to initialize login statement\n");
+		}
+		// Run procedure
+		if (mysql_stmt_execute(EmettiB) != 0) {
+			print_stmt_error(EmettiB, "An error occurred while retrieving the career report.");
+			goto out;
+		}
+	}
+	printf("Hai emanato %d biglietti !\n",biglietti);
+	system("pause");
+	mysql_stmt_close(EmettiB);
+	return;
+out:
+	mysql_stmt_close(EmettiB);
 }
 static void Emetti_abbonamenti(MYSQL* conn) {
+	MYSQL_STMT* EmettiA=NULL;
+	int abbonamenti;
+	printf("Inserisci il numero di biglietti da emettere : ");
+	scanf_s("%d", &abbonamenti);
+
+	for (int j = 0; j < abbonamenti; j++)
+	{
+		if (!setup_prepared_stmt(&EmettiA, "call Emetti_abbonamenti()", conn)) {
+			print_stmt_error(EmettiA, "Unable to initialize login statement\n");
+		}
+		// Run procedure
+		if (mysql_stmt_execute(EmettiA) != 0) {
+			print_stmt_error(EmettiA, "An error occurred while retrieving the career report.");
+			goto out;
+		}
+	}
+	printf("Hai emanato %d abbonamenti !\n", abbonamenti);
+	system("pause");
+	mysql_stmt_close(EmettiA);
+	return;
+out:
+	mysql_stmt_close(EmettiA);
+}
+
+static void Aggiungi_utente(MYSQL* conn)
+{
 	MYSQL_STMT* distanza_stmt;
+	MYSQL_BIND param[3];
+	
+	char username[45];
+	char password[45];
+	char ruolo[45];
+
+
+	printf("Inserisci l'username : ");
+	scanf_s("%s", username,45);
+	printf("Inserisci la password (e' consigliato usare pippo) : ");
+	scanf_s("%s", password,45);
+	printf("Inserisci il ruolo (AMMINISTRATORE|GUIDATORE|PASSEGGERO) : ");
+	scanf_s("%s", ruolo,45);
+	
+	
+
+	if (!setup_prepared_stmt(&distanza_stmt, "call Aggiungi_utente(?, ?, ?)", conn)) {
+		print_stmt_error(distanza_stmt, "Unable to initialize login statement\n");
+	}
+
+	// Prepare parameters
+	memset(param, 0, sizeof(param));
+
+	param[0].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[0].buffer = username;
+	param[0].buffer_length = strlen(username);
+
+	param[1].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[1].buffer = password;
+	param[1].buffer_length = strlen(password);
+
+	param[2].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[2].buffer = ruolo;
+	param[2].buffer_length = strlen(ruolo);
+
+	if (mysql_stmt_bind_param(distanza_stmt, param) != 0) {
+		finish_with_stmt_error(conn, distanza_stmt, "Could not bind parameters for career report\n", true);
+	}
+
+	// Run procedure
+	if (mysql_stmt_execute(distanza_stmt) != 0) {
+		print_stmt_error(distanza_stmt, "An error occurred while retrieving the career report.");
+		goto out;
+	}
+
+
+	printf("Hai aggiunto : Username %s, Ruolo: %s\n", username, ruolo);
+	system("pause");
+	mysql_stmt_close(distanza_stmt);
+	return;
+
+
+out:
+	mysql_stmt_close(distanza_stmt);
+
 }
 
 void run_as_administrator(MYSQL* conn)
@@ -401,63 +597,68 @@ void run_as_administrator(MYSQL* conn)
 		printf("6) Visualizza conducenti fermi\n");
 		printf("7) Visualizza veicoli attivi\n");
 		printf("8) Visualizza veicoli fermi\n");
-		printf("9)  Elimina un conducente\n");
+		printf("9) Elimina un conducente\n");
 		printf("10) Emetti biglietti\n");
 		printf("11) Emetti abbonamenti\n");
-		printf("12) Quit\n");
+		printf("12) Aggiungi utente\n");
+		printf("13) Quit\n");
 		scanf_s("%i", &numero);
 		switch (numero)
 		{
 		case 1:
-			printf("---------------------------Assegna_turno_al_conducente--------------------------------------------\n");
+			printf("-----------------------------------------------Assegna_turno_al_conducente-----------------------------------------\n");
 			Assegna_turno_al_conducente(conn);
 			break;
 		case 2:
-			printf("---------------------------------------------Assegna_veicolo_alla_tratta---------------------------------------------\n");
+			printf("---------------------------------------------Assegna_veicolo_alla_tratta-------------------------------------------\n");
 			Assegna_veicolo_alla_tratta(conn);
-			return;
+			break;
 		case 3:
-			printf("---------------------------------------------Assumi_conducente-------------------------------------------\n");
+			printf("---------------------------------------------Assumi_conducente------------------------------------------------------\n");
 			Assumi_conducente(conn);
-			return;
+			break;
 		case 4:
-			printf("---------------------------------------------Cambia_conducente_turno-------------------------------------------\n");
+			printf("---------------------------------------------Cambia_conducente_turno------------------------------------------------\n");
 			Cambia_conducente_turno(conn);
-			return;
+			break;
 		case 5:
 			printf("---------------------------------------------Visualizza_conducenti_attivi-------------------------------------------\n");
 			Visualizza_conducenti_attivi(conn);
-			return;
+			break;
 		case 6:
-			printf("---------------------------------------------Visualizza_conducenti_fermi-------------------------------------------\n");
+			printf("---------------------------------------------Visualizza_conducenti_fermi--------------------------------------------\n");
 			Visualizza_conducenti_fermi(conn);
-			return;
+			break;
 		case 7:
-			printf("---------------------------------------------Visualizza_veicoli_attivi-------------------------------------------\n");
+			printf("---------------------------------------------Visualizza_veicoli_attivi----------------------------------------------\n");
 			Visualizza_veicoli_attivi(conn);
-			return;
+			break;
 		case 8:
-			printf("---------------------------------------------Visualizza_veicoli_fermi-------------------------------------------\n");
+			printf("---------------------------------------------Visualizza_veicoli_fermi-----------------------------------------------\n");
 			Visualizza_veicoli_fermi(conn);
-			return;
+			break;
 		case 9:
-			printf("---------------------------------------------Elimina_conducente-------------------------------------------\n");
+			printf("---------------------------------------------Elimina_conducente-----------------------------------------------------\n");
 			Elimina_conducente(conn);
-			return;
+			break;
 		case 10:
-			printf("---------------------------------------------Emetti_biglietto-------------------------------------------\n");
+			printf("---------------------------------------------Emetti_biglietto-------------------------------------------------------\n");
 			Emetti_biglietto(conn);
-			return;
+			break;
 		case 11:
-			printf("---------------------------------------------Emetti_abbonamenti-------------------------------------------\n");
+			printf("---------------------------------------------Emetti_abbonamenti-----------------------------------------------------\n");
 			Emetti_abbonamenti(conn);
-			return;
+			break;
 		case 12:
-			printf("----------------------------------------Quit----------------------------------------\n");
+			printf("---------------------------------------------Aggiungi utente-----------------------------------------------------\n");
+			Aggiungi_utente(conn);
+			break;
+		case 13:
+			printf("---------------------------------------------------------Quit---------------------------------------------------------\n");
 			return;
 		default:
 			fprintf(stderr, "Invalid condition at %s:%d\n", __FILE__, __LINE__);
-			return;
+			break;
 		}
 	}
 	

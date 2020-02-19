@@ -70,18 +70,18 @@ void run_as_guidatore(MYSQL* conn)
 	int numero;
 	while (true) {
 
-		printf("------------------------------*** Cosa vuoi fare? ***------------------------------\n\n");
+		printf("-------------------------------------------------*** Cosa vuoi fare? ***-------------------------------------------------\n\n");
 		printf("1) Calcola prossima tratta del veicolo\n");
 		printf("2) Quit\n");
 		scanf_s("%i", &numero);
 		switch (numero) 
 		{
 		case 1:
-			printf("---------------------------Calcola la prossima tratta del veicolo--------------------------------------------\n");
+			printf("----------------------------------Calcola la prossima tratta del veicolo---------------------------------------------\n");
 			Calcola_prossima_tratta_veicolo(conn);
 			break;
 		case 2:
-			printf("---------------------------------------------Quit--------------------------------------------------------\n");
+			printf("---------------------------------------------------------Quit---------------------------------------------------------\n");
 			return;
 		
 		default:
