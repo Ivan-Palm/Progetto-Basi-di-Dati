@@ -52,10 +52,21 @@ static void Calcola_prossima_tratta_veicolo(MYSQL* conn)
 		print_stmt_error(distanza_stmt, "Could not buffer results");
 		
 	}
-	printf("La prossima tratta del veicolo %i e' la  %i\n", veicolo,tratta);
-	system("pause");
-	mysql_stmt_close(distanza_stmt);
-	return;
+	if (tratta != 0)
+	{
+		printf("La prossima tratta del veicolo %i e' la  %i\n", veicolo,tratta);
+		system("pause");
+		mysql_stmt_close(distanza_stmt);
+		return;
+	}
+	else
+	{
+		printf("Il veicolo non ha nessun altra tratta\n");
+		system("pause");
+		mysql_stmt_close(distanza_stmt);
+		return;
+	}
+	
 	
 
 	out:
@@ -81,7 +92,7 @@ void run_as_guidatore(MYSQL* conn)
 			Calcola_prossima_tratta_veicolo(conn);
 			break;
 		case 2:
-			printf("---------------------------------------------------------Quit---------------------------------------------------------\n");
+			printf("---------------------------------------------------------Logout---------------------------------------------------------\n");
 			return;
 		
 		default:

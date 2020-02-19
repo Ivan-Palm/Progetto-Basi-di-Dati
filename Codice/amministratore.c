@@ -15,12 +15,144 @@ struct average_gradess {
 };
 
 static void Assegna_turno_al_conducente(MYSQL* conn) {
-	MYSQL_STMT* distanza_stmt;
+	MYSQL_STMT* turno;
 	MYSQL_BIND param[4];
+	MYSQL_TIME  data;
+	MYSQL_TIME  inizio;
+	MYSQL_TIME  fine;
+	char Conducente_CF[16];
+
+	printf("Inserisci il CF dell'guidatore : ");
+	scanf_s("%s", Conducente_CF, 16);
+	printf("Inserisci il giorno\n");
+	printf("Anno : ");
+	scanf_s("%d", &data.year, 4);
+	printf("Mese : ");
+	scanf_s("%d", &data.month, 2);
+	printf("Giorno : ");
+	scanf_s("%d", &data.day, 2);
+	printf("Gli orari disponibili specificano solo l'ora\n ");
+
+	printf("Inserisci l'orario di inizio turno : \n");
+	printf("Ora");
+	scanf_s("%d:00:00", &inizio.hour, 2);
+
+	printf("Inserisci l'orario di fine turno : \n");
+	printf("Ora: ");
+	scanf_s("%d:00:00", &fine.hour, 2);
+	
+
+
+	if (!setup_prepared_stmt(&turno, "call Assegna_turno_al_conducente(?, ?, ?, ?)", conn)) {
+		print_stmt_error(turno, "Unable to initialize login statement\n");
+	}
+
+	// Prepare parameters
+	memset(param, 0, sizeof(param));
+
+	param[0].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[0].buffer = Conducente_CF;
+	param[0].buffer_length = strlen(Conducente_CF);
+
+	param[1].buffer_type = MYSQL_TYPE_DATE; //IN
+	param[1].buffer = (char*)&data;
+	param[1].buffer_length = sizeof(data);
+
+	param[2].buffer_type = MYSQL_TYPE_DATE; //IN
+	param[2].buffer = (char*)&inizio;
+	param[2].buffer_length = sizeof(inizio);
+
+	param[3].buffer_type = MYSQL_TYPE_DATE;  //IN  DATAAA
+	param[3].buffer = (char*)&fine;
+	param[3].buffer_length = sizeof(fine);
+
+	if (mysql_stmt_bind_param(turno, param) != 0) {
+		finish_with_stmt_error(conn, turno, "Could not bind parameters for career report\n", true);
+	}
+	// Run procedure
+	if (mysql_stmt_execute(turno) != 0) {
+		print_stmt_error(turno, "An error occurred while retrieving the career report.");
+		goto out;
+	}
+
+	printf("Hai assegnato ad : CF %s, il giorno %d il turno dalle %d alle %d", Conducente_CF,data, inizio, fine);
+	system("pause");
+	mysql_stmt_close(turno);
+	return;
+
+
+out:
+	mysql_stmt_close(turno);
+
 }
 static void Assegna_veicolo_alla_tratta(MYSQL* conn) {
-	MYSQL_STMT* distanza_stmt;
+	MYSQL_STMT* veicl_stmt;
 	MYSQL_BIND param[4];
+	MYSQL_TIME  ts;
+	char Conducente[16];
+	int Veicolo;
+	int Tratta;
+
+
+	printf("Conducente : ");
+	scanf_s("%s", Conducente, 16);
+	printf("Veicolo : ");
+	scanf_s("%d", &Veicolo);
+	printf("Tratta : ");
+	scanf_s("%d",&Tratta);
+
+	printf("Inserisci la data di percorrenza\n");
+	printf("Anno : ");
+	scanf_s("%d", &ts.year, 4);
+	printf("Mese : ");
+	scanf_s("%d", &ts.month, 2);
+	printf("Giorno : ");
+	scanf_s("%d", &ts.day, 2);
+
+
+	if (!setup_prepared_stmt(&veicl_stmt, "call Assegna_veicolo_alla_tratta(?, ?, ?, ?)", conn)) {
+		print_stmt_error(veicl_stmt, "Unable to initialize login statement\n");
+	}
+
+	// Prepare parameters
+	memset(param, 0, sizeof(param));
+
+	
+
+	param[0].buffer_type = MYSQL_TYPE_LONG;  //IN
+	param[0].buffer = &Veicolo;
+	param[0].buffer_length = sizeof(Veicolo);
+
+	param[1].buffer_type = MYSQL_TYPE_LONG;  //IN
+	param[1].buffer = &Tratta;
+	param[1].buffer_length = sizeof(Tratta);
+
+	param[2].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[2].buffer = Conducente;
+	param[2].buffer_length = strlen(Conducente);
+
+	param[3].buffer_type = MYSQL_TYPE_DATE;  //IN  DATAAA
+	param[3].buffer = (char*)&ts;
+	param[3].buffer_length = sizeof(ts);
+
+	if (mysql_stmt_bind_param(veicl_stmt, param) != 0) {
+		finish_with_stmt_error(conn, veicl_stmt, "Could not bind parameters for career report\n", true);
+	}
+	// Run procedure
+	if (mysql_stmt_execute(veicl_stmt) != 0) {
+		print_stmt_error(veicl_stmt, "An error occurred while retrieving the career report.");
+		goto out;
+	}
+
+	printf("Hai assegnato al conducente : CF %s la tratta %d con il veicolo %d il giorno %d:%d:%d", Conducente, Tratta, Veicolo, ts.year,ts.month,ts.day);
+	system("pause");
+	mysql_stmt_close(veicl_stmt);
+	return;
+
+
+out:
+	mysql_stmt_close(veicl_stmt);
+
 }
 static void Assumi_conducente(MYSQL* conn) {
 	MYSQL_STMT* Assum_cond;
@@ -126,7 +258,6 @@ static void Cambia_conducente_turno(MYSQL* conn) {
 	MYSQL_STMT* distanza_stmt;
 	MYSQL_BIND param[4];
 }
-
 static size_t parse_avgs(MYSQL* conn, MYSQL_STMT* stmt, struct average_grades** ret)
 {
 	
@@ -196,7 +327,7 @@ static size_t parse_avgss(MYSQL* conn, MYSQL_STMT* stmt, struct average_gradess*
 
 	memset(param, 0, sizeof(param));
 
-	param[0].buffer_type = MYSQL_TYPE_VAR_STRING;
+	param[0].buffer_type = MYSQL_TYPE_LONG;
 	param[0].buffer = &Matricola;
 	param[0].buffer_length = 16;
 
@@ -327,7 +458,6 @@ out:
 	mysql_stmt_close(Visualizza_conducenti_f);
 
 }
-
 static void Visualizza_veicoli_attivi(MYSQL* conn) {
 	MYSQL_STMT* Visualizza_veicoli;
 	int status;
@@ -427,7 +557,6 @@ static void Visualizza_veicoli_fermi(MYSQL* conn) {
 out:
 	mysql_stmt_close(Visualizza_veicoli_f);
 } /*SBAGLIA IL CODICE DEI VEICOLI*/
-
 static void Elimina_conducente(MYSQL* conn) {
 	MYSQL_STMT* Elimina;
 	MYSQL_BIND param[2];
@@ -471,7 +600,6 @@ out:
 	mysql_stmt_close(Elimina);
 
 } /*MI CONFERMA IL TUTTO MA NON LO ELIMINA SUL DATABASE*/
-
 static void Emetti_biglietto(MYSQL* conn) {
 	MYSQL_STMT* EmettiB=NULL;
 	int biglietti;
@@ -520,7 +648,6 @@ static void Emetti_abbonamenti(MYSQL* conn) {
 out:
 	mysql_stmt_close(EmettiA);
 }
-
 static void Aggiungi_utente(MYSQL* conn)
 {
 	MYSQL_STMT* distanza_stmt;
@@ -654,7 +781,7 @@ void run_as_administrator(MYSQL* conn)
 			Aggiungi_utente(conn);
 			break;
 		case 13:
-			printf("---------------------------------------------------------Quit---------------------------------------------------------\n");
+			printf("---------------------------------------------------------Logout---------------------------------------------------------\n");
 			return;
 		default:
 			fprintf(stderr, "Invalid condition at %s:%d\n", __FILE__, __LINE__);

@@ -54,7 +54,7 @@ void run_as_passeggero(MYSQL* conn)
 			Calcola_distanza_veicolo(conn);
 			return;
 		case 4:
-			printf("----------------------------------------Quit----------------------------------------\n");
+			printf("----------------------------------------Logout----------------------------------------\n");
 			return;
 
 		default:
