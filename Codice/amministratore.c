@@ -18,8 +18,8 @@ static void Assegna_turno_al_conducente(MYSQL* conn) {
 	MYSQL_STMT* turno;
 	MYSQL_BIND param[4];
 	MYSQL_TIME  data;
-	MYSQL_TIME  inizio;
-	MYSQL_TIME  fine;
+	char inizio[12];
+	char fine[12];
 	char Conducente_CF[16];
 
 	printf("Inserisci il CF dell'guidatore : ");
@@ -33,15 +33,17 @@ static void Assegna_turno_al_conducente(MYSQL* conn) {
 	scanf_s("%d", &data.day, 2);
 	printf("Gli orari disponibili specificano solo l'ora\n ");
 
+
+
 	printf("Inserisci l'orario di inizio turno : \n");
-	printf("Ora");
-	scanf_s("%d:00:00", &inizio.hour, 2);
+	printf("Ora :");
+	scanf_s("%s", inizio, 12);
+	strcat_s(inizio,12, ":00:00");
 
 	printf("Inserisci l'orario di fine turno : \n");
 	printf("Ora: ");
-	scanf_s("%d:00:00", &fine.hour, 2);
-	
-
+	scanf_s("%s", fine, 12);
+	strcat_s(fine,12, ":00:00");
 
 	if (!setup_prepared_stmt(&turno, "call Assegna_turno_al_conducente(?, ?, ?, ?)", conn)) {
 		print_stmt_error(turno, "Unable to initialize login statement\n");
@@ -58,13 +60,14 @@ static void Assegna_turno_al_conducente(MYSQL* conn) {
 	param[1].buffer = (char*)&data;
 	param[1].buffer_length = sizeof(data);
 
-	param[2].buffer_type = MYSQL_TYPE_DATE; //IN
-	param[2].buffer = (char*)&inizio;
-	param[2].buffer_length = sizeof(inizio);
+	param[2].buffer_type = MYSQL_TYPE_TIME; //IN
+	param[2].buffer = inizio;
+	param[2].buffer_length = strlen(inizio);
 
-	param[3].buffer_type = MYSQL_TYPE_DATE;  //IN  DATAAA
-	param[3].buffer = (char*)&fine;
-	param[3].buffer_length = sizeof(fine);
+	param[3].buffer_type = MYSQL_TYPE_TIME;  //IN 
+	param[3].buffer = fine;
+	param[3].buffer_length = strlen(fine);
+
 
 	if (mysql_stmt_bind_param(turno, param) != 0) {
 		finish_with_stmt_error(conn, turno, "Could not bind parameters for career report\n", true);
@@ -728,7 +731,7 @@ void run_as_administrator(MYSQL* conn)
 		printf("10) Emetti biglietti\n");
 		printf("11) Emetti abbonamenti\n");
 		printf("12) Aggiungi utente\n");
-		printf("13) Quit\n");
+		printf("13) Logout\n");
 		scanf_s("%i", &numero);
 		switch (numero)
 		{

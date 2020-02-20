@@ -83,7 +83,7 @@ void run_as_guidatore(MYSQL* conn)
 
 		printf("-------------------------------------------------*** Cosa vuoi fare? ***-------------------------------------------------\n\n");
 		printf("1) Calcola prossima tratta del veicolo\n");
-		printf("2) Quit\n");
+		printf("2) Logout\n");
 		scanf_s("%i", &numero);
 		switch (numero) 
 		{
