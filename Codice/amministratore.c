@@ -18,8 +18,8 @@ static void Assegna_turno_al_conducente(MYSQL* conn) {
 	MYSQL_STMT* turno;
 	MYSQL_BIND param[4];
 	MYSQL_TIME  data;
-	char inizio[12];
-	char fine[12];
+	char inizio[16];
+	char fine[16];
 	char Conducente_CF[16];
 
 	printf("Inserisci il CF dell'guidatore : ");
@@ -31,19 +31,12 @@ static void Assegna_turno_al_conducente(MYSQL* conn) {
 	scanf_s("%d", &data.month, 2);
 	printf("Giorno : ");
 	scanf_s("%d", &data.day, 2);
-	printf("Gli orari disponibili specificano solo l'ora\n ");
+	printf("Dalle :   (Inserire nel formato hh:mm:ss)\n");
+	scanf_s("%s", &inizio);
+	printf("Alle :   (Inserire nel formato hh:mm:ss)\n");
+	scanf_s("%s", &fine);
+	printf("\n\nINIZIO : %s  FINE : %s\n\n", inizio, fine);
 
-
-
-	printf("Inserisci l'orario di inizio turno : \n");
-	printf("Ora :");
-	scanf_s("%s", inizio, 12);
-	strcat_s(inizio,12, ":00:00");
-
-	printf("Inserisci l'orario di fine turno : \n");
-	printf("Ora: ");
-	scanf_s("%s", fine, 12);
-	strcat_s(fine,12, ":00:00");
 
 	if (!setup_prepared_stmt(&turno, "call Assegna_turno_al_conducente(?, ?, ?, ?)", conn)) {
 		print_stmt_error(turno, "Unable to initialize login statement\n");
@@ -60,11 +53,11 @@ static void Assegna_turno_al_conducente(MYSQL* conn) {
 	param[1].buffer = (char*)&data;
 	param[1].buffer_length = sizeof(data);
 
-	param[2].buffer_type = MYSQL_TYPE_TIME; //IN
+	param[2].buffer_type = MYSQL_TYPE_VAR_STRING; //IN
 	param[2].buffer = inizio;
 	param[2].buffer_length = strlen(inizio);
 
-	param[3].buffer_type = MYSQL_TYPE_TIME;  //IN 
+	param[3].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN 
 	param[3].buffer = fine;
 	param[3].buffer_length = strlen(fine);
 
@@ -78,7 +71,7 @@ static void Assegna_turno_al_conducente(MYSQL* conn) {
 		goto out;
 	}
 
-	printf("Hai assegnato ad : CF %s, il giorno %d il turno dalle %d alle %d", Conducente_CF,data, inizio, fine);
+	printf("Turno assegnato con successo! \n");
 	system("pause");
 	mysql_stmt_close(turno);
 	return;
@@ -95,8 +88,6 @@ static void Assegna_veicolo_alla_tratta(MYSQL* conn) {
 	char Conducente[16];
 	int Veicolo;
 	int Tratta;
-
-
 	printf("Conducente : ");
 	scanf_s("%s", Conducente, 16);
 	printf("Veicolo : ");
@@ -258,8 +249,68 @@ out:
 
 }  
 static void Cambia_conducente_turno(MYSQL* conn) {
-	MYSQL_STMT* distanza_stmt;
+	MYSQL_STMT* changeturno;
 	MYSQL_BIND param[4];
+	MYSQL_TIME  data;
+	char inizio[16];
+	char fine[16];
+	char Conducente_CF[16];
+	char Conducente_CF2[16];
+
+	printf("Inserisci il CF dell'guidatore da cambiare : ");
+	scanf_s("%s", Conducente_CF, 16);
+
+	printf("Inserisci il CF dell'guidatore che lo sostituira' : ");
+	scanf_s("%s", Conducente_CF2, 16);
+	printf("Inserisci il giorno\n");
+	printf("Anno : ");
+	scanf_s("%d", &data.year, 4);
+	printf("Mese : ");
+	scanf_s("%d", &data.month, 2);
+	printf("Giorno : ");
+	scanf_s("%d", &data.day, 2);
+
+
+
+	if (!setup_prepared_stmt(&changeturno, "call Cambia_conducente_turno(?, ?, ?)", conn)) {
+		print_stmt_error(changeturno, "Unable to initialize login statement\n");
+	}
+
+	// Prepare parameters
+	memset(param, 0, sizeof(param));
+
+	param[0].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[0].buffer = Conducente_CF;
+	param[0].buffer_length = strlen(Conducente_CF);
+
+	param[1].buffer_type = MYSQL_TYPE_DATE;  //IN
+	param[1].buffer = (char*)&data;
+	param[1].buffer_length = sizeof(data);
+
+	param[2].buffer_type = MYSQL_TYPE_VAR_STRING;  //IN
+	param[2].buffer = Conducente_CF2;
+	param[2].buffer_length = strlen(Conducente_CF2);
+
+
+
+	if (mysql_stmt_bind_param(changeturno, param) != 0) {
+		finish_with_stmt_error(conn, changeturno, "Could not bind parameters for career report\n", true);
+	}
+	// Run procedure
+	if (mysql_stmt_execute(changeturno) != 0) {
+		print_stmt_error(changeturno, "An error occurred while retrieving the career report.");
+		goto out;
+	}
+
+	printf("Turno cambiato con successo! \n");
+	system("pause");
+	mysql_stmt_close(changeturno);
+	return;
+
+
+out:
+	mysql_stmt_close(changeturno);
+
 }
 static size_t parse_avgs(MYSQL* conn, MYSQL_STMT* stmt, struct average_grades** ret)
 {
