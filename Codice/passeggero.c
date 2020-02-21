@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <math.h>
 #include "defines.h"
 #define MAX_DEGREES 128
 
@@ -10,6 +10,8 @@ struct average_grades {
 	int longitudineI;
 	double avg;
 };
+float ftemp;
+float ftemp2;
 
 static void Timbra_biglietto(MYSQL* conn) {
 	MYSQL_STMT* TimbraB;
@@ -148,7 +150,6 @@ static size_t parse_avgs(MYSQL* conn, MYSQL_STMT* stmt, struct average_grades** 
 		finish_with_stmt_error(conn, stmt, "Unable to bind column parameters\n", true);
 	}
 	int i = 1;
-	printf("Distanze: \n");
 	/* assemble course general information */
 	while (true) {
 		status = mysql_stmt_fetch(stmt);
@@ -159,10 +160,10 @@ static size_t parse_avgs(MYSQL* conn, MYSQL_STMT* stmt, struct average_grades** 
 		(*ret)[row].latitudineI= latitudine;
 		(*ret)[row].longitudineI = longitudine;
 		printf_s("La tua fermata si trova qui:\nLatitudine : %s	Longitudine : %s\n", latitudine, longitudine);
+
 		/*VALORE DELLA FERMATA DOVE SI TROVANO*/
-		float ftemp = atof(latitudine);
-		float ftemp2 = atof(longitudine);
-		
+		 ftemp = atof(latitudine);
+		 ftemp2 = atof(longitudine);
 		row++;
 	}
 
@@ -185,7 +186,9 @@ static void Calcola_distanza_veicolo(MYSQL* conn) {
 	}
 
 	printf("A quale fermata ti trovi ? \n");
+	printf("SCELTA: ");
 	scanf_s("%d", &Tratta);
+	printf("\n\n\n");
 
 
 	// Prepare parameters
@@ -221,11 +224,11 @@ static void Calcola_distanza_veicolo(MYSQL* conn) {
 		else {
 			sprintf_s(header, 512, "\nI veicoli si trovano: " ,avgs[latitudineI].latitudineI, avgs[longitudineI].longitudineI);
 			dump_result_set(conn, Distanza, header);
+
 			latitudineI++;
 			longitudineI++;
 			
 		}
-
 		// more results? -1 = no, >0 = error, 0 = yes (keep looking)
 	next:
 		status = mysql_stmt_next_result(Distanza);
@@ -237,7 +240,6 @@ static void Calcola_distanza_veicolo(MYSQL* conn) {
 out:
 	mysql_stmt_close(Distanza);
 }
-
 
 void run_as_passeggero(MYSQL* conn)
 {
@@ -251,6 +253,7 @@ void run_as_passeggero(MYSQL* conn)
 		printf("2) Convalida un abbonamento\n");
 		printf("3) Calcola distanza veicolo\n");
 		printf("4) Logout\n");
+		printf("SCELTA: ");
 		scanf_s("%i", &numero);
 		switch (numero)
 		{
@@ -265,6 +268,16 @@ void run_as_passeggero(MYSQL* conn)
 		case 3:
 			printf("---------------------------------------------Calcola distanza veicolo--------------------------------------------\n");
 			Calcola_distanza_veicolo(conn);
+			float lat;
+			float lon;
+			printf("\n\n Inserisci i dati del veicolo di interesse \n");
+			printf("Latitudine: ");
+			scanf_s("%f", &lat);
+			printf("Longitudine: ");
+			scanf_s("%f", &lon);
+			float risultato;
+			risultato = 2 * 6371 * asin(sqrt(((sin(lat - ftemp) / 2) * (sin(lat - ftemp) / 2)) + cos(ftemp) * cos(lat) * (sin((lon - ftemp2) / 2) * sin((lon - ftemp2) / 2))));
+			printf("\nIl veicolo si trova a %f Km di distanza\n risultato ");
 			break;
 		case 4:
 			printf("----------------------------------------Logout----------------------------------------\n");

@@ -732,6 +732,7 @@ void run_as_administrator(MYSQL* conn)
 		printf("11) Emetti abbonamenti\n");
 		printf("12) Aggiungi utente\n");
 		printf("13) Logout\n");
+		printf("SCELTA: ");
 		scanf_s("%i", &numero);
 		switch (numero)
 		{

@@ -101,7 +101,8 @@ main(void) {
 	{
 		printf("*** Cosa vuoi fare? *** \n");
 		printf("1) Login\n");
-		printf("2) Quit\n");
+		printf("2) Esci\n");
+		printf("SCELTA: ");
 		scanf_s("%i", &choise);
 		switch (choise) 
 		{

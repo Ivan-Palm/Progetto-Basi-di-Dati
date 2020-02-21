@@ -150,7 +150,7 @@ void dump_result_set(MYSQL* conn, MYSQL_STMT* stmt, char* title)
 		if ((rs_metadata = mysql_stmt_result_metadata(stmt)) == NULL) {
 			finish_with_stmt_error(conn, stmt, "Unable to retrieve result metadata\n", true);
 		}
-
+		/*QUI*/
 		dump_result_set_header(rs_metadata);
 
 		fields = mysql_fetch_fields(rs_metadata);
@@ -204,6 +204,7 @@ void dump_result_set(MYSQL* conn, MYSQL_STMT* stmt, char* title)
 
 			if (rs_bind[i].buffer == NULL) {
 				finish_with_stmt_error(conn, stmt, "Cannot allocate output buffers\n", true);
+				
 			}
 		}
 
