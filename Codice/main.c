@@ -122,8 +122,8 @@ main(void) {
 				break;
 
 			case CONDUCENTE:
-				printf("Connessione riuscita come guidatore\n");
-				run_as_guidatore(conn);
+				printf("Connessione riuscita come conducente\n");
+				run_as_conducente(conn);
 				break;
 
 			case AMMINISTRATORE:

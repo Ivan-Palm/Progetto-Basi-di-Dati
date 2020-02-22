@@ -716,7 +716,7 @@ static void Aggiungi_utente(MYSQL* conn)
 	scanf_s("%s", username,45);
 	printf("Inserisci la password (e' consigliato usare pippo) : ");
 	scanf_s("%s", password,45);
-	printf("Inserisci il ruolo (AMMINISTRATORE|GUIDATORE|PASSEGGERO) : ");
+	printf("Inserisci il ruolo (AMMINISTRATORE|CONDUCENTE|PASSEGGERO) : ");
 	scanf_s("%s", ruolo,45);
 	
 	
