@@ -31,11 +31,11 @@ static void Assegna_turno_al_conducente(MYSQL* conn) {
 	scanf_s("%d", &data.month, 2);
 	printf("Giorno : ");
 	scanf_s("%d", &data.day, 2);
-	printf("Dalle :   (Inserire nel formato hh:mm:ss)\n");
+	printf("La differenza tra l'orario di inizio e quello di fine deve essere precisamente di 8 ore ! \n");
+	printf("Dalle :   (Inserire nel formato hh:mm:)\n");
 	scanf_s("%s", &inizio);
-	printf("Alle :   (Inserire nel formato hh:mm:ss)\n");
+	printf("Alle :   (Inserire nel formato hh:mm)\n");
 	scanf_s("%s", &fine);
-	printf("\n\nINIZIO : %s  FINE : %s\n\n", inizio, fine);
 
 
 	if (!setup_prepared_stmt(&turno, "call Assegna_turno_al_conducente(?, ?, ?, ?)", conn)) {

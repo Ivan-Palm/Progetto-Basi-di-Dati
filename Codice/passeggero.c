@@ -270,15 +270,26 @@ void run_as_passeggero(MYSQL* conn)
 			Calcola_distanza_veicolo(conn);
 			float lat;
 			float lon;
-			printf("\n\n Inserisci i dati del veicolo di interesse \n");
-			printf("Latitudine: ");
-			scanf_s("%f", &lat);
-			printf("Longitudine: ");
-			scanf_s("%f", &lon);
-			float risultato;
-			risultato = 2 * 6371 * asin(sqrt(((sin(lat - ftemp) / 2) * (sin(lat - ftemp) / 2)) + cos(ftemp) * cos(lat) * (sin((lon - ftemp2) / 2) * sin((lon - ftemp2) / 2))));
-			printf("\nIl veicolo si trova a %f Km di distanza\n risultato ");
-			break;
+			int c;
+			printf("Ci sono veicoli passati per li ? (s = 1|n = 0)\n");
+			scanf_s("%d",&c);
+			if (c == 1)
+			{
+				printf("\n\n Inserisci i dati del veicolo di interesse \n");
+				printf("Latitudine: ");
+				scanf_s("%f", &lat);
+				printf("Longitudine: ");
+				scanf_s("%f", &lon);
+				double risultato;
+				risultato = 2 * 6371 * asin(sqrt(((sin(lat-ftemp) / 2) * (sin(lat-ftemp) / 2)) + cos(ftemp) * cos(lat) * (sin((lon - ftemp2) / 2) * sin((lon - ftemp2) / 2))));
+				printf("\nIl veicolo si trova a %f Km di distanza\n risultato ", risultato);
+				break;
+			}
+			else
+			{
+				break;
+			}
+			
 		case 4:
 			printf("----------------------------------------Logout----------------------------------------\n");
 			return;

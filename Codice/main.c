@@ -113,7 +113,6 @@ main(void) {
 			printf("Password: ");
 			scanf_s("%s", &pass);
 			printf("--------------------------------------------------------------------------------------------------------------------\n");
-			printf("Hai inserito [%s %s]\n", us, pass);
 			role = attempt_login(conn, us, pass);
 			switch (role) 
 			{
